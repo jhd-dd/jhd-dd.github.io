@@ -1,0 +1,461 @@
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@400;500;700&display=swap');
+
+:root {
+    --primary: #0038A8;
+    --secondary: #CE1127;
+    --accent: #FCD116;
+    --cream: #f8f9ff;
+    --dark: #0a0f1e;
+    --success: #4caf50;
+    --error: #ef4444;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--cream);
+    color: var(--dark);
+    overflow-x: hidden;
+    position: relative;
+}
+
+body::before {
+    content: '';
+    position: fixed;
+    top: -40%;
+    right: -20%;
+    width: 80%;
+    height: 80%;
+    background: radial-gradient(circle, rgba(0, 56, 168, 0.08) 0%, transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+}
+
+body::after {
+    content: '';
+    position: fixed;
+    bottom: -40%;
+    left: -20%;
+    width: 80%;
+    height: 80%;
+    background: radial-gradient(circle, rgba(206, 17, 39, 0.06) 0%, transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+}
+
+/* ── Layout ──────────────────────────────────────────────────────────────── */
+.container {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 0 2rem;
+    position: relative;
+    z-index: 1;
+}
+
+/* ── Header ──────────────────────────────────────────────────────────────── */
+header {
+    padding: 3rem 0 2rem;
+    text-align: center;
+    animation: fadeInDown 0.8s ease-out;
+}
+
+.flag-banner {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.flag-stripe {
+    height: 6px;
+    border-radius: 3px;
+    flex: 1;
+    max-width: 80px;
+}
+
+.stripe-blue { background: var(--primary); }
+.stripe-red  { background: var(--secondary); }
+
+.flag-emoji {
+    font-size: 2.5rem;
+}
+
+h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(2rem, 5vw, 4rem);
+    font-weight: 900;
+    color: var(--primary);
+    line-height: 1.1;
+    margin-bottom: 0.75rem;
+    letter-spacing: -0.02em;
+}
+
+h1 span {
+    color: var(--secondary);
+}
+
+.subtitle {
+    font-size: 1.1rem;
+    color: #555;
+    font-weight: 500;
+}
+
+/* ── Auth Card ───────────────────────────────────────────────────────────── */
+.auth {
+    background: white;
+    border-radius: 24px;
+    padding: 2.5rem;
+    margin: 2.5rem 0;
+    box-shadow: 0 20px 60px rgba(0, 56, 168, 0.1);
+    border: 2px solid rgba(0, 56, 168, 0.08);
+    position: relative;
+    overflow: hidden;
+    animation: fadeInUp 0.8s ease-out 0.2s both;
+}
+
+.auth::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 5px;
+    background: linear-gradient(90deg, var(--primary) 50%, var(--secondary) 50%);
+}
+
+.auth-section {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.75rem;
+    text-align: center;
+    margin: 1.5rem 0;
+}
+
+/* ── Buttons ─────────────────────────────────────────────────────────────── */
+.btn {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 1rem;
+    font-weight: 700;
+    padding: 0.9rem 2.5rem;
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+}
+
+.btn-primary {
+    background: var(--primary);
+    color: white;
+    box-shadow: 0 4px 20px rgba(0, 56, 168, 0.3);
+}
+
+.btn-primary:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 30px rgba(0, 56, 168, 0.45);
+    background: #002d8a;
+}
+
+.btn-danger {
+    background: var(--secondary);
+    color: white;
+    box-shadow: 0 4px 20px rgba(206, 17, 39, 0.25);
+}
+
+.btn-danger:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 30px rgba(206, 17, 39, 0.4);
+}
+
+.btn-sync {
+    background: linear-gradient(135deg, var(--primary), #0052cc);
+    color: white;
+    font-size: 1.1rem;
+    padding: 1.1rem 3rem;
+    box-shadow: 0 6px 25px rgba(0, 56, 168, 0.35);
+}
+
+.btn-sync:hover:not(:disabled) {
+    transform: translateY(-3px);
+    box-shadow: 0 12px 35px rgba(0, 56, 168, 0.45);
+}
+
+.btn:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+
+/* ── Status Messages ─────────────────────────────────────────────────────── */
+#authStatus {
+    padding: 0.85rem 1.25rem;
+    border-radius: 10px;
+    font-weight: 500;
+    font-size: 0.95rem;
+    display: none;
+}
+
+#authStatus.visible    { display: block; animation: slideIn 0.4s ease-out; }
+.status-success { background: rgba(76, 175, 80, 0.1);  color: var(--success); border: 1px solid rgba(76, 175, 80, 0.3); }
+.status-error   { background: rgba(239, 68, 68, 0.1);  color: var(--error);   border: 1px solid rgba(239, 68, 68, 0.3); }
+.status-info    { background: rgba(0, 56, 168, 0.08);  color: var(--primary); border: 1px solid rgba(0, 56, 168, 0.2); }
+
+/* ── Month Selector ──────────────────────────────────────────────────────── */
+.month-selector {
+    margin: 2.5rem 0 1.5rem;
+    animation: fadeInUp 0.8s ease-out 0.4s both;
+}
+
+.month-selector h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.75rem;
+    color: var(--primary);
+    font-weight: 700;
+    margin-bottom: 1.25rem;
+    text-align: center;
+}
+
+.month-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0.75rem;
+}
+
+.month-card {
+    background: white;
+    padding: 1rem;
+    border-radius: 14px;
+    border: 2px solid rgba(0, 56, 168, 0.1);
+    cursor: pointer;
+    text-align: center;
+    font-weight: 600;
+    font-size: 0.95rem;
+    transition: all 0.25s ease;
+    box-shadow: 0 2px 8px rgba(0, 56, 168, 0.06);
+}
+
+.month-card:hover {
+    transform: translateY(-3px);
+    border-color: var(--accent);
+    box-shadow: 0 6px 16px rgba(0, 56, 168, 0.12);
+}
+
+.month-card.selected {
+    background: linear-gradient(135deg, var(--primary), #0052cc);
+    color: white;
+    border-color: var(--primary);
+    box-shadow: 0 6px 20px rgba(0, 56, 168, 0.35);
+}
+
+/* ── Year Selector ───────────────────────────────────────────────────────── */
+.sync-section {
+    text-align: center;
+    margin: 2rem 0 1.5rem;
+    animation: fadeInUp 0.8s ease-out 0.6s both;
+}
+
+.sync-section h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.75rem;
+    color: var(--primary);
+    font-weight: 700;
+    margin-bottom: 1rem;
+}
+
+.year-selector {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.year-selector input {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 1.5rem;
+    font-weight: 700;
+    padding: 0.65rem 1.25rem;
+    border: 2px solid var(--primary);
+    border-radius: 12px;
+    text-align: center;
+    width: 130px;
+    background: white;
+    color: var(--primary);
+    outline: none;
+}
+
+.year-btn {
+    width: 46px;
+    height: 46px;
+    border-radius: 50%;
+    border: 2px solid var(--primary);
+    background: white;
+    color: var(--primary);
+    font-size: 1.4rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.year-btn:hover {
+    background: var(--primary);
+    color: white;
+    transform: scale(1.1);
+}
+
+/* ── Holidays Preview ────────────────────────────────────────────────────── */
+.holidays-preview {
+    margin: 2rem 0;
+    animation: fadeInUp 0.6s ease-out both;
+}
+
+.holidays-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1.25rem;
+}
+
+.holidays-header h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.6rem;
+    color: var(--primary);
+    font-weight: 700;
+}
+
+.holiday-count {
+    background: var(--accent);
+    color: var(--dark);
+    font-weight: 700;
+    font-size: 0.85rem;
+    padding: 0.3rem 0.85rem;
+    border-radius: 20px;
+}
+
+.holiday-item {
+    background: #f8f9ff;
+    padding: 1rem 1.25rem;
+    border-radius: 12px;
+    margin-bottom: 0.6rem;
+    border-left: 4px solid var(--primary);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: all 0.25s ease;
+    animation: slideIn 0.4s ease-out both;
+}
+
+.holiday-item:hover {
+    transform: translateX(6px);
+    box-shadow: 0 4px 12px rgba(0, 56, 168, 0.12);
+    background: white;
+}
+
+.holiday-item.special {
+    border-left-color: var(--secondary);
+}
+
+.holiday-item.special .holiday-type {
+    color: var(--secondary);
+}
+
+.holiday-left {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+}
+
+.holiday-name {
+    font-weight: 600;
+    font-size: 1rem;
+    color: var(--dark);
+}
+
+.holiday-type {
+    font-size: 0.78rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--primary);
+}
+
+.holiday-date {
+    font-weight: 700;
+    color: var(--primary);
+    font-size: 0.95rem;
+    white-space: nowrap;
+}
+
+.no-holidays {
+    text-align: center;
+    color: #888;
+    padding: 2rem;
+    font-style: italic;
+}
+
+/* ── Loading Spinner ─────────────────────────────────────────────────────── */
+.loading {
+    display: inline-block;
+    width: 18px;
+    height: 18px;
+    border: 3px solid rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    border-top-color: white;
+    animation: spin 0.8s linear infinite;
+    vertical-align: middle;
+    margin-right: 8px;
+}
+
+/* ── Footer ──────────────────────────────────────────────────────────────── */
+footer {
+    text-align: center;
+    padding: 2.5rem 0;
+    color: #888;
+    font-size: 0.875rem;
+}
+
+/* ── Utility ─────────────────────────────────────────────────────────────── */
+.hidden {
+    display: none !important;
+}
+
+/* ── Animations ──────────────────────────────────────────────────────────── */
+@keyframes fadeInDown {
+    from { opacity: 0; transform: translateY(-25px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(25px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideIn {
+    from { opacity: 0; transform: translateX(-15px); }
+    to   { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* ── Responsive ──────────────────────────────────────────────────────────── */
+@media (max-width: 600px) {
+    .auth { padding: 1.75rem 1.25rem; }
+    h1 { font-size: 2rem; }
+    .month-grid { grid-template-columns: repeat(3, 1fr); }
+}
+
+@media (max-width: 400px) {
+    .month-grid { grid-template-columns: repeat(2, 1fr); }
+}

@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Public Calendar Holiday Sync</title>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="flag-banner">
+                <div class="flag-stripe stripe-blue"></div>
+                <div class="flag-emoji">🇵🇭</div>
+                <div class="flag-stripe stripe-red"></div>
+            </div>
+            <h1>Public Holidays<br><span>Calendar Sync</span></h1>
+            <p class="subtitle">Sync all PH public holidays directly to your Google Calendar.</p>
+        </header>
+
+        <div class="auth">
+            <div class="auth-section">
+                <button id="authorizeBtn" class="btn btn-primary" disabled>
+                    Connect to Google Calendar
+                </button>
+                <button id="signoutBtn" class="btn btn-danger hidden">
+                    Sign Out
+                </button>
+                <div id="authStatus"></div>
+            </div>
+        </div>
+
+        <div id="mainContent" class="hidden">
+            <div class="month-selector">
+                <h2>Select a Month</h2>
+                <div class="month-grid" id="monthGrid"></div>
+            </div>
+
+            <div class="sync-section">
+                <h2>Choose Year</h2>
+                <div class="year-selector">
+                    <button class="year-btn" id="prevYear">−</button>
+                    <input type="number" id="yearInput" min="2020" max="2035" value="2026">
+                    <button class="year-btn" id="nextYear">+</button>
+                </div>
+                <button id="syncBtn" class="btn btn-sync" disabled>
+                    Sync to Calendar
+                </button>
+            </div>
+
+            <div id="holidaysPreview" class="holidays-preview hidden">
+                <div class="holidays-header">
+                    <h2>Holidays Preview</h2>
+                    <span class="holiday-count" id="holidayCount">0 holidays</span>
+                </div>
+                <div id="holidaysList"></div>
+            </div>
+        </div>
+
+        <footer>
+            <p>Avila • Arcon • Esquillo • Gorgolon • Infante • Limimbay • Nebril • Peña</p>
+        </footer>
+    </div>
+
+    <script>
+        const CLIENT_ID = '991396104439-a7lnh39sf20olhubn5vhptaas2juqq21.apps.googleusercontent.com';
+        const API_KEY = 'AIzaSyCEp8loJOr_EsYmhqWms3o-7IugLUpyTkg';
+        const DISCOVERY_DOC = 'https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest';
+        const SCOPES = 'https://www.googleapis.com/auth/calendar.events';
+
+        const MONTHS = [
+            'January', 'February', 'March', 'April',
+            'May', 'June', 'July', 'August',
+            'September', 'October', 'November', 'December'
+        ];
+
+        let tokenClient;
+        let gapiInited = false;
+        let gisInited = false;
+        let accessToken = null;
+        let currentYear = 2026;
+        let selectedMonth = null;
+
+        function getPhilippineHolidays(year, monthIndex = null) {
+            const fixedHolidays = [
+                { name: "New Year's Day",                     month: 1,  day: 1,  type: 'regular' },
+                { name: "People Power Anniversary",           month: 2,  day: 25, type: 'working' },
+                { name: "Araw ng Kagitingan",                 month: 4,  day: 9,  type: 'regular' },
+                { name: "Labor Day",                          month: 5,  day: 1,  type: 'regular' },
+                { name: "Independence Day",                   month: 6,  day: 12, type: 'regular' },
+                { name: "Ninoy Aquino Day",                   month: 8,  day: 21, type: 'special' },
+                { name: "All Saints' Day",                    month: 11, day: 1,  type: 'special' },
+                { name: "All Souls' Day",                     month: 11, day: 2,  type: 'special' },
+                { name: "Bonifacio Day",                      month: 11, day: 30, type: 'regular' },
+                { name: "Feast of the Immaculate Conception", month: 12, day: 8,  type: 'special' },
+                { name: "Christmas Day",                      month: 12, day: 25, type: 'regular' },
+                { name: "Rizal Day",                          month: 12, day: 30, type: 'regular' },
+                { name: "New Year's Eve",                     month: 12, day: 31, type: 'special' },
+            ];
+
+            const easter = computeEaster(year);
+            const maundyThursday = new Date(easter);
+            maundyThursday.setDate(easter.getDate() - 3);
+            const goodFriday = new Date(easter);
+            goodFriday.setDate(easter.getDate() - 2);
+            const blackSaturday = new Date(easter);
+            blackSaturday.setDate(easter.getDate() - 1);
+
+            let holidays = [
+                ...fixedHolidays.map(h => ({
+                    name: h.name,
+                    date: new Date(year, h.month - 1, h.day),
+                    type: h.type
+                })),
+                { name: 'National Heroes Day', date: getLastMondayOfMonth(year, 7), type: 'regular' },
+                { name: 'Maundy Thursday',     date: maundyThursday,                type: 'regular' },
+                { name: 'Good Friday',         date: goodFriday,                    type: 'regular' },
+                { name: 'Black Saturday',      date: blackSaturday,                 type: 'special' },
+            ];
+
+            if (monthIndex !== null) {
+                holidays = holidays.filter(h => h.date.getMonth() === monthIndex);
+            }
+
+            return holidays.sort((a, b) => a.date - b.date);
+        }
+
+        function computeEaster(year) {
+            const a = year % 19, b = Math.floor(year / 100), c = year % 100;
+            const d = Math.floor(b / 4), e = b % 4, f = Math.floor((b + 8) / 25);
+            const g = Math.floor((b - f + 1) / 3), h = (19 * a + b - d - g + 15) % 30;
+            const i = Math.floor(c / 4), k = c % 4;
+            const l = (32 + 2 * e + 2 * i - h - k) % 7;
+            const m = Math.floor((a + 11 * h + 22 * l) / 451);
+            const month = Math.floor((h + l - 7 * m + 114) / 31) - 1;
+            const day = ((h + l - 7 * m + 114) % 31) + 1;
+            return new Date(year, month, day);
+        }
+
+        function getLastMondayOfMonth(year, monthIndex) {
+            const lastDay = new Date(year, monthIndex + 1, 0);
+            const dow = lastDay.getDay();
+            const diff = dow >= 1 ? dow - 1 : 6;
+            return new Date(year, monthIndex, lastDay.getDate() - diff);
+        }
+
+        function toDateString(date) {
+            const y = date.getFullYear();
+            const m = String(date.getMonth() + 1).padStart(2, '0');
+            const d = String(date.getDate()).padStart(2, '0');
+            return `${y}-${m}-${d}`;
+        }
+
+        function populateMonths() {
+            const grid = document.getElementById('monthGrid');
+            grid.innerHTML = '';
+            MONTHS.forEach((name, i) => {
+                const card = document.createElement('div');
+                card.className = 'month-card';
+                card.textContent = name;
+                card.addEventListener('click', () => selectMonth(i, card));
+                grid.appendChild(card);
+            });
+        }
+
+        function selectMonth(index, element) {
+            document.querySelectorAll('.month-card').forEach(card => card.classList.remove('selected'));
+            element.classList.add('selected');
+            selectedMonth = index;
+            document.getElementById('syncBtn').disabled = false;
+            renderHolidays();
+        }
+
+        function renderHolidays() {
+            const holidays = getPhilippineHolidays(currentYear, selectedMonth);
+            const list = document.getElementById('holidaysList');
+            list.innerHTML = '';
+
+            if (holidays.length === 0) {
+                list.innerHTML = '<p class="no-holidays">No holidays this month.</p>';
+            } else {
+                holidays.forEach((holiday, i) => {
+                    const item = document.createElement('div');
+                    item.className = `holiday-item${holiday.type === 'special' ? ' special' : holiday.type === 'working' ? ' working' : ''}`;
+                    item.style.animationDelay = `${i * 0.05}s`;
+                    item.innerHTML = `
+                        <div class="holiday-left">
+                            <span class="holiday-name">${holiday.name}</span>
+                            <span class="holiday-type">${holiday.type === 'regular' ? '📌 Regular Holiday' : holiday.type === 'special' ? '⭐ Special Non-Working' : '🔵 Special Working'}</span>
+                        </div>
+                        <span class="holiday-date">${formatDate(holiday.date)}</span>
+                    `;
+                    list.appendChild(item);
+                });
+            }
+
+            document.getElementById('holidayCount').textContent =
+                `${holidays.length} holiday${holidays.length !== 1 ? 's' : ''}`;
+            document.getElementById('holidaysPreview').classList.remove('hidden');
+        }
+
+        function formatDate(date) {
+            return date.toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric' });
+        }
+
+        function changeYear(delta) {
+            currentYear = Math.min(2035, Math.max(2020, currentYear + delta));
+            document.getElementById('yearInput').value = currentYear;
+            if (selectedMonth !== null) renderHolidays();
+        }
+
+        function showStatus(message, type) {
+            const el = document.getElementById('authStatus');
+            el.textContent = message;
+            el.className = `status-${type} visible`;
+        }
+
+        function gapiLoaded() {
+            gapi.load('client', async () => {
+                try {
+                    await gapi.client.init({ apiKey: API_KEY, discoveryDocs: [DISCOVERY_DOC] });
+                    gapiInited = true;
+                    maybeEnableButtons();
+                } catch (e) {
+                    showStatus('Failed to initialize Google API.', 'error');
+                }
+            });
+        }
+
+        function gisLoaded() {
+            try {
+                tokenClient = google.accounts.oauth2.initTokenClient({
+                    client_id: CLIENT_ID,
+                    scope: SCOPES,
+                    callback: (response) => {
+                        if (response.error) {
+                            showStatus('Authentication failed: ' + response.error, 'error');
+                            return;
+                        }
+                        accessToken = response.access_token;
+                        gapi.client.setToken({ access_token: accessToken });
+                        showStatus('✓ Connected to Google Calendar!', 'success');
+                        document.getElementById('authorizeBtn').classList.add('hidden');
+                        document.getElementById('signoutBtn').classList.remove('hidden');
+                        document.getElementById('mainContent').classList.remove('hidden');
+                        populateMonths();
+                    },
+                });
+                gisInited = true;
+                maybeEnableButtons();
+            } catch (e) {
+                showStatus('Failed to initialize Google Sign-In.', 'error');
+            }
+        }
+
+        function maybeEnableButtons() {
+            if (gapiInited && gisInited) {
+                document.getElementById('authorizeBtn').disabled = false;
+                showStatus('Ready! Click the button to connect your calendar.', 'info');
+            }
+        }
+
+        async function syncToCalendar() {
+            if (!accessToken) {
+                showStatus('Please connect to Google Calendar first.', 'error');
+                return;
+            }
+            if (selectedMonth === null) {
+                showStatus('Please select a month first.', 'error');
+                return;
+            }
+
+            const btn = document.getElementById('syncBtn');
+            btn.innerHTML = '<span class="loading"></span> Syncing...';
+            btn.disabled = true;
+
+            const holidays = getPhilippineHolidays(currentYear, selectedMonth);
+            let successCount = 0;
+
+            for (const holiday of holidays) {
+                try {
+                    const dateStr = toDateString(holiday.date);
+                    await gapi.client.calendar.events.insert({
+                        calendarId: 'primary',
+                        resource: {
+                            summary: holiday.name,
+                            start: { date: dateStr },
+                            end: { date: dateStr },
+                            description: `Philippine ${holiday.type === 'regular' ? 'Regular Public' : holiday.type === 'special' ? 'Special Non-Working' : 'Special Working'} Holiday`,
+                            colorId: holiday.type === 'regular' ? '11' : holiday.type === 'special' ? '5' : '7',
+                        },
+                    });
+                    successCount++;
+                } catch (err) {
+                    console.error('Failed to sync:', holiday.name, err);
+                }
+            }
+
+            btn.textContent = 'Sync to Calendar';
+            btn.disabled = false;
+
+            showStatus(
+                successCount > 0
+                    ? `✓ Synced ${successCount} holiday${successCount !== 1 ? 's' : ''} for ${MONTHS[selectedMonth]} ${currentYear}!`
+                    : '✗ Failed to sync. Please try again.',
+                successCount > 0 ? 'success' : 'error'
+            );
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            showStatus('⏳ Loading Google APIs...', 'info');
+
+            document.getElementById('authorizeBtn').addEventListener('click', () => {
+                if (tokenClient) tokenClient.requestAccessToken({ prompt: 'consent' });
+                else showStatus('Google Sign-In not ready. Please refresh.', 'error');
+            });
+
+            document.getElementById('signoutBtn').addEventListener('click', () => {
+                if (accessToken) {
+                    google.accounts.oauth2.revoke(accessToken);
+                    gapi.client.setToken(null);
+                    accessToken = null;
+                }
+                selectedMonth = null;
+                document.getElementById('authorizeBtn').classList.remove('hidden');
+                document.getElementById('signoutBtn').classList.add('hidden');
+                document.getElementById('mainContent').classList.add('hidden');
+                document.getElementById('holidaysPreview').classList.add('hidden');
+                document.getElementById('monthGrid').innerHTML = '';
+                document.getElementById('authStatus').className = '';
+            });
+
+            document.getElementById('prevYear').addEventListener('click', () => changeYear(-1));
+            document.getElementById('nextYear').addEventListener('click', () => changeYear(1));
+            document.getElementById('yearInput').addEventListener('change', (e) => {
+                currentYear = parseInt(e.target.value);
+                if (selectedMonth !== null) renderHolidays();
+            });
+            document.getElementById('syncBtn').addEventListener('click', syncToCalendar);
+        });
+    </script>
+
+    <script src="https://apis.google.com/js/api.js" onload="gapiLoaded()" async defer></script>
+    <script src="https://accounts.google.com/gsi/client" onload="gisLoaded()" async defer></script>
+</body>
+</html>
