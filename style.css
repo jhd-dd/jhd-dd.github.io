@@ -9,6 +9,7 @@
     --success: #4caf50;
     --error: #ef4444;
     --unofficial: #7c3aed;
+    --rod: #0B8043;
 }
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -283,6 +284,8 @@ h1 span { color: var(--secondary); }
 .holiday-item.working .holiday-type { color: #2563eb; }
 .holiday-item.social { border-left-color: var(--unofficial); }
 .holiday-item.social .holiday-type { color: var(--unofficial); }
+.holiday-item.montalban { border-left-color:  #0B8043; }
+.holiday-item.montalban .holiday-type { color: var(--rod); }
 
 .holiday-left { display: flex; flex-direction: column; gap: 0.15rem; }
 .holiday-name { font-weight: 600; font-size: 1rem; color: var(--dark); }
