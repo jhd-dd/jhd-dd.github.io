@@ -15,6 +15,12 @@ function getNthWeekday(year, month, weekday, nth) {
     return 1 + offset + (nth-1)*7;
 }
 
+function getLastWeekday(year, month, weekday) {
+    const lastDay = new Date(year, month+1, 0);
+    const offset = (lastDay.getDay() - weekday + 7) % 7;
+    return lastDay.getDate() - offset;
+}
+
 function getPhilippineHolidays(year, monthIndex = null) {
     const fixedHolidays = [
         { name: "New Year's Day",                     month: 1,  day: 1,  type: 'regular' },
@@ -57,7 +63,7 @@ function getPhilippineHolidays(year, monthIndex = null) {
 
     let holidays = [
         ...fixedHolidays.map(h => ({ name: h.name, date: new Date(year, h.month - 1, h.day), type: h.type })),
-        { name: 'National Heroes Day', date: getLastMondayOfMonth(year, 7), type: 'regular' },
+        { name: 'National Heroes Day', date: new Date(year, 7, getLastWeekday(year, 7, 1 )), type: 'regular' },
         { name: 'Maundy Thursday',     date: maundyThursday,                type: 'regular' },
         { name: 'Good Friday',         date: goodFriday,                    type: 'regular' },
         { name: 'Black Saturday',      date: blackSaturday,                 type: 'special' },
@@ -83,13 +89,6 @@ function computeEaster(year) {
     const month = Math.floor((h + l - 7 * m + 114) / 31) - 1;
     const day = ((h + l - 7 * m + 114) % 31) + 1;
     return new Date(year, month, day);
-}
-
-function getLastMondayOfMonth(year, monthIndex) {
-    const lastDay = new Date(year, monthIndex + 1, 0);
-    const dow = lastDay.getDay();
-    const diff = dow >= 1 ? dow - 1 : 6;
-    return new Date(year, monthIndex, lastDay.getDate() - diff);
 }
 
 function toDateString(date) {
